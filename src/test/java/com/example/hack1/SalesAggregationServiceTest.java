@@ -1,3 +1,4 @@
+import com.example.hack1.sales.domain.Sales;
 import com.oreo.insight.factory.model.Sale;
 import com.oreo.insight.factory.repository.SalesRepository;
 import com.oreo.insight.factory.dto.SalesAggregates;
