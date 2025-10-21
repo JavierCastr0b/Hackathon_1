@@ -1,3 +1,4 @@
+import com.example.hack1.sales.domain.Sales;
 import com.oreo.insight.factory.model.Sale;
 import com.oreo.insight.factory.repository.SalesRepository;
 import com.oreo.insight.factory.dto.SalesAggregates;
@@ -34,7 +35,7 @@ class SalesAggregationServiceTest {
     private static final LocalDate END_DATE = LocalDate.parse("2025-09-07");
 
     // Lista de datos de prueba (los "Seeds" del hackathon)
-    private List<Sale> mockSales;
+    private List<Sales> mockSales;
 
     @BeforeEach
     void setUp() {
