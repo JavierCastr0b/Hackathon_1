@@ -1,10 +1,9 @@
 package com.example.hack1.User.Service;
 import com.example.hack1.User.Repository.UserRepository;
+import com.example.hack1.Exception.ResourceNotFoundException;
 import com.example.hack1.User.domain.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authorization.method.AuthorizeReturnObject;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 
@@ -29,13 +28,4 @@ public class UserService {
             userRepository.deleteById(id);
         }
     }
-
-
-
-
-
-
-
-}
-
 
