@@ -63,6 +63,7 @@
             <artifactId>spring-boot-testcontainers</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -107,7 +108,11 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-ai-inference</artifactId>
+            <version>1.0.0-beta.1</version>
+        </dependency>
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
