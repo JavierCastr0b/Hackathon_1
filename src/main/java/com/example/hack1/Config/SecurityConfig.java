@@ -1,6 +1,7 @@
 package com.example.hack1.Config;
 
 import com.example.hack1.Security.JwtAuthenticationFilter;
+import com.example.hack1.User.Service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,10 +25,10 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfig {
-    private final Userservice userDetailsService;
+    private final UserService userDetailsService;
     private final JwtAuthenticationFilter jwtFilter;
 
-    public SecurityConfig(AccountService userDetailsService, JwtAuthorizationFilter jwtFilter) {
+    public SecurityConfig(UserService userDetailsService, JwtAuthenticationFilter jwtFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtFilter = jwtFilter;
     }
