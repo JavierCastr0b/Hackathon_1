@@ -2,6 +2,7 @@ package com.example.hack1.sales.application;
 
 import com.example.hack1.sales.domain.SaleRequest;
 import com.example.hack1.sales.domain.Sales;
+import com.example.hack1.sales.domain.SalesAggregates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -12,8 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -126,6 +131,80 @@ public class SalesService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Venta no encontrada");
         }
         saleRepository.deleteById(id);
+    }
+
+    public SalesAggregates calculateAggregates(LocalDate from, LocalDate to, String branch) {
+
+        Instant startInstant = from.atStartOfDay(ZoneOffset.UTC).toInstant();
+
+        Instant endInstant = to.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant();
+
+        Page<Sales> salesPage;
+        boolean isFilteredByBranch = (branch != null && !branch.isBlank());
+
+        if (isFilteredByBranch) {
+            salesPage = saleRepository.findByBranchAndSoldAtBetween(
+                    branch, startInstant, endInstant, Pageable.unpaged()
+            );
+        } else {
+            salesPage = saleRepository.findBySoldAtBetween(
+                    startInstant, endInstant, Pageable.unpaged()
+            );
+        }
+
+        List<Sales> salesList = salesPage.getContent();
+
+        if (salesList.isEmpty()) {
+            return new SalesAggregates(
+                    0, 0, 0.0, "N/A", "N/A", from, to, branch
+            );
+        }
+
+        int totalSales = salesList.size();
+        int totalUnits = salesList.stream()
+                .mapToInt(Sales::getUnits)
+                .sum();
+
+        double totalRevenue = salesList.stream()
+                .mapToDouble(s -> s.getUnits() * s.getPrice())
+                .sum();
+        totalRevenue = Math.round(totalRevenue * 100.0) / 100.0;
+
+        String topSku = salesList.stream()
+                .collect(Collectors.groupingBy(
+                        Sales::getSku, // Agrupar por nombre de SKU
+                        Collectors.summingInt(Sales::getUnits) // Sumar las unidades
+                ))
+                .entrySet().stream() // Obtener un stream de [SKU, TotalUnidades]
+                .max(Map.Entry.comparingByValue()) // Encontrar el máximo por valor (TotalUnidades)
+                .map(Map.Entry::getKey) // Quedarnos solo con el nombre (la clave)
+                .orElse("N/A"); // Fallback por si acaso
+
+        String topBranch;
+        if (isFilteredByBranch) {
+            topBranch = branch; // Si ya filtramos, esa es la "top"
+        } else {
+            topBranch = salesList.stream()
+                    .collect(Collectors.groupingBy(
+                            Sales::getBranch,
+                            Collectors.summingInt(Sales::getUnits)
+                    ))
+                    .entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse("N/A");
+        }
+
+        return new SalesAggregates(
+                totalSales,
+                totalUnits,
+                totalRevenue,
+                topSku,
+                topBranch,
+                from,
+                to,
+                branch
+        );
     }
     
 }
