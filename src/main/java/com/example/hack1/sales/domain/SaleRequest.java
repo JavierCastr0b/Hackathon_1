@@ -52,7 +52,7 @@ public class SaleRequest {
         this.units = units;
     }
 
-    public BigDecimal getPrice() {
+    public Double getPrice() {
         return price;
     }
 

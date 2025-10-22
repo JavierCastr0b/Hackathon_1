@@ -82,8 +82,9 @@ public class SalesService {
         }
 
         List<Sales> all = saleRepository.findAll();
+        String finalBranch = branch;
         List<Sales> filtered = all.stream()
-                .filter(s -> branch == null || branch.isEmpty() || branch.equalsIgnoreCase(s.getBranch()))
+                .filter(s -> finalBranch == null || finalBranch.isEmpty() || finalBranch.equalsIgnoreCase(s.getBranch()))
                 .filter(s -> from == null || !s.getSoldAt().isBefore(from))
                 .filter(s -> to == null || !s.getSoldAt().isAfter(to))
                 .collect(Collectors.toList());
