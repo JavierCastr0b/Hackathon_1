@@ -1,6 +1,8 @@
 package com.example.hack1.Security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +25,18 @@ public class JwtService {
     @Value("${jwt.expiration-refresh}")
     private Long refreshTokenExpiration;
 
+    private final JwtParser jwtParser;
+
+
+    public JwtService(@Value("${jwt.secret}") String secret) {
+        this.secret = secret;
+        this.jwtParser = Jwts.parser().setSigningKey(getSigningKey()).build();
+    }
+
+
+    public Long getAccessTokenExpiration() {
+        return accessTokenExpiration;
+    }
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
@@ -39,27 +53,25 @@ public class JwtService {
                 .compact();
     }
 
+
     public boolean isTokenValid(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith((SecretKey) getSigningKey())
-                    .build()
-                    .parseSignedClaims(token);
-
+            jwtParser.parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            // Token is invalid or expired
+            // Token es inválido o expirado
             return false;
-
         }
     }
 
-    public String extractUsername(String token) {
-        return Jwts.parser()
-                .verifyWith((SecretKey) getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+    private Claims extractAllClaims(String token) {
+        return jwtParser.parseClaimsJws(token).getBody();
     }
+
+
+    public String extractUsername(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+
 }

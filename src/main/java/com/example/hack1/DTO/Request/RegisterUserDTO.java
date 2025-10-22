@@ -1,5 +1,6 @@
 package com.example.hack1.DTO.Request;
 
+import com.example.hack1.User.domain.Rol;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
