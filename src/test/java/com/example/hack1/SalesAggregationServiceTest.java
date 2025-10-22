@@ -3,6 +3,7 @@ package com.example.hack1;
 import com.example.hack1.sales.application.SalesRepository;
 import com.example.hack1.sales.application.SalesService;
 import com.example.hack1.sales.domain.Sales;
+import com.example.hack1.sales.domain.SalesAggregates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
