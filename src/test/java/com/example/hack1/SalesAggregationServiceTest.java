@@ -35,7 +35,7 @@ class SalesAggregationServiceTest {
     private static final LocalDate END_DATE = LocalDate.parse("2025-09-07");
 
     // Lista de datos de prueba (los "Seeds" del hackathon)
-    private List<Sale> mockSales;
+    private List<Sales> mockSales;
 
     @BeforeEach
     void setUp() {
