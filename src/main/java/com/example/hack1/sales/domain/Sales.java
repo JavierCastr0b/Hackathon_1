@@ -4,12 +4,15 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-
+@RequiredArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "sales")
 public class Sales {
@@ -48,6 +51,7 @@ public class Sales {
         this.createdBy = createdBy;
         this.createdAt = createdAt;
     }
+
 
     public String getId() {
         return id;
