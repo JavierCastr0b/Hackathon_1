@@ -32,14 +32,18 @@ public class WeeklySummaryListener {
 
             log.info("✅ Resumen generado con IA");
 
-            String emailContent = buildEmailContent(aggregates, event);
-
-            log.info("📧 Enviando email a: {}", event.getEmailTo());
-            emailService.sendWeeklySummary(
-                    event.getEmailTo(),
-                    "📊 Resumen Semanal de Ventas - Oreo",
-                    emailContent
-            );
+            if (event.isPremium()) {
+                log.info("📧 Enviando email premium con gráficos y PDF");
+                emailService.sendPremiumWeeklySummary(aggregates, event);
+            } else {
+                String emailContent = buildEmailContent(aggregates, event);
+                log.info("📧 Enviando email a: {}", event.getEmailTo());
+                emailService.sendWeeklySummary(
+                        event.getEmailTo(),
+                        "📊 Resumen Semanal de Ventas - Oreo",
+                        emailContent
+                );
+            }
 
             log.info("✅ Reporte completado y enviado: {}", event.getRequestId());
 

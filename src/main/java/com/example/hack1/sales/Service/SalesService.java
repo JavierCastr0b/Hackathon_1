@@ -1,7 +1,12 @@
 package com.example.hack1.sales.Service;
 
+import com.example.hack1.DTO.Request.PremiumWeeklySummaryRequestDTO;
+import com.example.hack1.DTO.Request.ReportRequestedEvent;
 import com.example.hack1.DTO.Request.SaleRequestDTO;
+import com.example.hack1.DTO.Request.WeeklySummaryRequestDTO;
+import com.example.hack1.DTO.Response.PremiumWeeklySummaryResponseDTO;
 import com.example.hack1.DTO.Response.SaleResponseDTO;
+import com.example.hack1.DTO.Response.WeeklySummaryResponseDTO;
 import com.example.hack1.Exception.ResourceNotFoundException;
 import com.example.hack1.Exception.UnauthorizedException;
 import com.example.hack1.Models.GitHubModelsService;
@@ -13,6 +18,7 @@ import com.example.hack1.sales.domain.SalesAggregates;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,9 +34,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -41,6 +50,7 @@ public class SalesService {
     private final UserRepository userRepository;
     private final GitHubModelsService gitHubModelsService;
     private final ModelMapper modelMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Obtener el usuario autenticado actual
@@ -282,6 +292,97 @@ public class SalesService {
         return new SalesAggregates(
                 totalSales, totalUnits, totalRevenue.doubleValue(),
                 topSku, topBranch, from, to, branch, summary
+        );
+    }
+
+    /**
+     * Mueve aquí la lógica de /summary/weekly
+     */
+    @Transactional(readOnly = true)
+    public WeeklySummaryResponseDTO requestWeeklySummary(WeeklySummaryRequestDTO request) {
+        User currentUser = getCurrentUser();
+        boolean isCentral = isCentral(currentUser);
+
+        String branch = request.getBranch();
+        if (!isCentral) {
+            branch = currentUser.getBranch();
+        }
+
+        LocalDate from = (request.getFrom() != null) ? request.getFrom() : LocalDate.now().minusDays(7);
+        LocalDate to = (request.getTo() != null) ? request.getTo() : LocalDate.now();
+
+        String requestId = "req_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        ReportRequestedEvent event = ReportRequestedEvent.builder()
+                .requestId(requestId)
+                .from(from)
+                .to(to)
+                .branch(branch)
+                .emailTo(request.getEmailTo())
+                .requestedBy(currentUser.getUsername())
+                // booleans por defecto en false
+                .build();
+
+        applicationEventPublisher.publishEvent(event);
+        log.info("📤 Evento publicado para procesamiento asíncrono: {}", requestId);
+
+        return new WeeklySummaryResponseDTO(
+                requestId,
+                "PROCESSING",
+                "Su solicitud de reporte está siendo procesada. Recibirá el resumen en " + request.getEmailTo() + " en unos momentos.",
+                "30-60 segundos",
+                Instant.now()
+        );
+    }
+
+    /**
+     * Mueve aquí la lógica de /summary/weekly/premium
+     */
+    @Transactional(readOnly = true)
+    public PremiumWeeklySummaryResponseDTO requestPremiumWeeklySummary(PremiumWeeklySummaryRequestDTO request) {
+        User currentUser = getCurrentUser();
+        boolean isCentral = isCentral(currentUser);
+
+        String branch = request.getBranch();
+        if (!isCentral) {
+            branch = currentUser.getBranch();
+        }
+
+        LocalDate from = (request.getFrom() != null) ? request.getFrom() : LocalDate.now().minusDays(7);
+        LocalDate to = (request.getTo() != null) ? request.getTo() : LocalDate.now();
+
+        String requestId = "req_premium_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        boolean includeCharts = (request.getIncludeCharts() == null) || request.getIncludeCharts();
+        boolean attachPdf = (request.getAttachPdf() == null) || request.getAttachPdf();
+
+        ReportRequestedEvent event = ReportRequestedEvent.builder()
+                .requestId(requestId)
+                .from(from)
+                .to(to)
+                .branch(branch)
+                .emailTo(request.getEmailTo())
+                .requestedBy(currentUser.getUsername())
+                .isPremium(true)
+                .includeCharts(includeCharts)
+                .attachPdf(attachPdf)
+                .build();
+
+        applicationEventPublisher.publishEvent(event);
+        log.info("📤 Evento premium publicado para procesamiento asíncrono: {}", requestId);
+
+        List<String> features = new ArrayList<>();
+        features.add("HTML_FORMAT");
+        if (includeCharts) features.add("CHARTS");
+        if (attachPdf) features.add("PDF_ATTACHMENT");
+
+        return new PremiumWeeklySummaryResponseDTO(
+                requestId,
+                "PROCESSING",
+                "Su reporte premium está siendo generado. Incluirá gráficos y PDF adjunto.",
+                "60-90 segundos",
+                Instant.now(),
+                features
         );
     }
 }

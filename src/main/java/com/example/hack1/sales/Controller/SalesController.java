@@ -1,8 +1,10 @@
 package com.example.hack1.sales.Controller;
 
+import com.example.hack1.DTO.Request.PremiumWeeklySummaryRequestDTO;
 import com.example.hack1.DTO.Request.ReportRequestedEvent;
 import com.example.hack1.DTO.Request.SaleRequestDTO;
 import com.example.hack1.DTO.Request.WeeklySummaryRequestDTO;
+import com.example.hack1.DTO.Response.PremiumWeeklySummaryResponseDTO;
 import com.example.hack1.DTO.Response.SaleResponseDTO;
 import com.example.hack1.DTO.Response.WeeklySummaryResponseDTO;
 import com.example.hack1.User.domain.User;
@@ -24,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -113,38 +117,13 @@ public class SalesController {
     @PreAuthorize("hasAnyAuthority('CENTRAL', 'BRANCH')")
     public ResponseEntity<WeeklySummaryResponseDTO> requestWeeklySummary(
             @Valid @RequestBody WeeklySummaryRequestDTO request) {
+        return ResponseEntity.accepted().body(salesService.requestWeeklySummary(request));
+    }
 
-        User currentUser = salesService.getCurrentUser();
-        boolean isCentral = salesService.isCentral(currentUser);
-
-        String branch = request.getBranch();
-        if (!isCentral) {
-            branch = currentUser.getBranch();
-        }
-
-        LocalDate from = request.getFrom() != null ? request.getFrom() : LocalDate.now().minusDays(7);
-        LocalDate to = request.getTo() != null ? request.getTo() : LocalDate.now();
-
-        String requestId = "req_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-
-        ReportRequestedEvent event = new ReportRequestedEvent(
-                requestId,
-                from,
-                to,
-                branch,
-                request.getEmailTo(),
-                currentUser.getUsername()
-        );
-
-        applicationEventPublisher.publishEvent(event);
-        log.info("📤 Evento publicado para procesamiento asíncrono: {}", requestId);
-
-        return ResponseEntity.accepted().body(new WeeklySummaryResponseDTO(
-                requestId,
-                "PROCESSING",
-                "Su solicitud de reporte está siendo procesada. Recibirá el resumen en " + request.getEmailTo() + " en unos momentos.",
-                "30-60 segundos",
-                Instant.now()
-        ));
+    @PostMapping("/summary/weekly/premium")
+    @PreAuthorize("hasAnyAuthority('CENTRAL', 'BRANCH')")
+    public ResponseEntity<PremiumWeeklySummaryResponseDTO> requestPremiumWeeklySummary(
+            @Valid @RequestBody PremiumWeeklySummaryRequestDTO request) {
+        return ResponseEntity.accepted().body(salesService.requestPremiumWeeklySummary(request));
     }
 }
