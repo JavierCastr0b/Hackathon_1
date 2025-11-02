@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import javax.management.relation.Role;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {

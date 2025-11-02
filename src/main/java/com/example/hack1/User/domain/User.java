@@ -1,5 +1,6 @@
 package com.example.hack1.User.domain;
 
+import com.example.hack1.sales.domain.Sales;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -8,11 +9,11 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -21,21 +22,21 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "users")
 @Builder
-public class User implements UserDetails {
+public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 50)
+    private String id;
 
     @Size(min = 3, max = 30)
-    @Column(unique = true, nullable = false) // Username también debe ser único
+    @Column(unique = true, nullable = false)
     private String username;
 
     @Size(min = 8)
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING) // 1. Corregido
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @NotNull
     private Rol role;
@@ -46,43 +47,28 @@ public class User implements UserDetails {
     @Email
     private String email;
 
-    @CreationTimestamp // 5. Añadido
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL)
+    private List<Sales> sales;
 
-    // --- MÉTODOS DE UserDetails CORREGIDOS ---
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 3. Corregido
-        return List.of(new SimpleGrantedAuthority(role.name()));
-    }
+    @PrePersist
+    public void generateId() {
+        if (this.id == null) {
+            // Generar timestamp de 2 dígitos (01-99)
+            long timestamp = System.currentTimeMillis() % 100;
 
-    @Override
-    public String getUsername() {
-        // 2. Corregido y añadido
-        // Se usa email para el login, por eso se devuelve email
-        return this.email;
-    }
+            // Generar parte aleatoria (16 caracteres)
+            String randomPart = UUID.randomUUID().toString()
+                    .replace("-", "")
+                    .toUpperCase()
+                    .substring(0, 16);
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true; // 4. Corregido
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true; // 4. Corregido
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true; // 4. Corregido
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true; // 4. Corregido
+            // Formato: u_XX + random (ejemplo: u_01A1B2C3D4E5F6G7)
+            this.id = String.format("u_%02d%s", timestamp, randomPart);
+        }
     }
 }

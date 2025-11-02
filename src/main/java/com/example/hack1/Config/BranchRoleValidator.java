@@ -1,6 +1,7 @@
 package com.example.hack1.Config;
 
 import com.example.hack1.DTO.Request.RegisterUserDTO;
+import com.example.hack1.User.domain.Rol;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
